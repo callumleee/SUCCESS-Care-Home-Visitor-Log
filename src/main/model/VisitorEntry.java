@@ -3,11 +3,9 @@ package model;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-import org.json.JSONObject;
-import persistence.Writable;
-
 //  Represents a single visit to a resident: visitor + resident + entry/exit times.
-public class VisitorEntry implements Writable {
+public class VisitorEntry {
+    private int id;
     private String visitorName;
     private String residentName;
     private LocalDateTime timeIn;
@@ -23,6 +21,17 @@ public class VisitorEntry implements Writable {
         this.timeIn = timeIn;
         this.timeOut = null;
 
+    }
+
+    // EFFECTS: constructs a VisitorEntry that was already stored in the database,
+    // with the given id and times (timeOut is null if still signed in)
+    public VisitorEntry(int id, String visitorName, String residentName,
+            LocalDateTime timeIn, LocalDateTime timeOut) {
+        this.id = id;
+        this.visitorName = visitorName;
+        this.residentName = residentName;
+        this.timeIn = timeIn;
+        this.timeOut = timeOut;
     }
 
     // MODIFIES: this
@@ -52,6 +61,17 @@ public class VisitorEntry implements Writable {
         return Duration.between(timeIn, timeOut).toMinutes();
     }
 
+    // EFFECTS: returns the database id (0 if this entry has not been saved yet)
+    public int getId() {
+        return id;
+    }
+
+    // MODIFIES: this
+    // EFFECTS: sets the database id
+    public void setId(int id) {
+        this.id = id;
+    }
+
     // EFFECTS: returns visitor name
     public String getVisitorName() {
         return visitorName;
@@ -72,21 +92,5 @@ public class VisitorEntry implements Writable {
         return timeOut;
     }
 
-    // EFFECTS: returns this VisitorEntry as a JSON object
-    @Override
-    public JSONObject toJson() {
-        JSONObject json = new JSONObject();
-        json.put("visitorName", visitorName);
-        json.put("residentName", residentName);
-        json.put("timeIn", timeIn.toString());
-
-        if (timeOut == null) {
-            json.put("timeOut", JSONObject.NULL);
-        } else {
-            json.put("timeOut", timeOut.toString());
-        }
-
-        return json;
-    }
 
 }

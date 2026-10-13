@@ -68,7 +68,7 @@ public class VisitorLogTableModel extends AbstractTableModel {
     }
 
     // MODIFIES: this
-    // EFFECTS: sets the visitor log to a new one (when loading from file)
+    // EFFECTS: sets the visitor log to a new one (when loading from the database)
     public void setLog(VisitorLog newLog) {
         this.log = newLog;
         refresh();

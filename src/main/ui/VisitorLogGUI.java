@@ -2,8 +2,8 @@ package ui;
 
 import model.VisitorEntry;
 import model.VisitorLog;
-import persistence.JsonReader;
-import persistence.JsonWriter;
+import persistence.SqliteVisitorRepository;
+import persistence.VisitorRepository;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,8 +11,7 @@ import java.awt.event.ActionListener;
 import java.time.LocalDateTime;
 import java.awt.event.ActionEvent;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.sql.SQLException;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -23,10 +22,9 @@ import model.EventLog;
 // GUI for the Visitor Log
 public class VisitorLogGUI extends JFrame implements ActionListener {
 
-    private static final String JSON_STORE = "./data/visitorlog.json";
+    private static final String DB_PATH = "./data/visitorlog.db";
     private VisitorLog log;
-    private JsonWriter jsonWriter;
-    private JsonReader jsonReader;
+    private VisitorRepository repository;
     private VisitorLogTableModel tableModel;
     private JTable table;
 
@@ -37,8 +35,6 @@ public class VisitorLogGUI extends JFrame implements ActionListener {
         setPreferredSize(new Dimension(900, 600));
 
         log = new VisitorLog();
-        jsonWriter = new JsonWriter(JSON_STORE);
-        jsonReader = new JsonReader(JSON_STORE);
 
         setLayout(new BorderLayout());
 
@@ -53,7 +49,7 @@ public class VisitorLogGUI extends JFrame implements ActionListener {
             }
         });
 
-        handleLoadOnStart();
+        loadFromDatabase();
 
         pack();
         setLocationRelativeTo(null);
@@ -84,13 +80,8 @@ public class VisitorLogGUI extends JFrame implements ActionListener {
         signOutButton.setActionCommand("signOut");
         signOutButton.addActionListener(this);
 
-        JButton saveButton = new JButton("Save");
-        saveButton.setActionCommand("save");
-        saveButton.addActionListener(this);
-
         panel.add(signInButton);
         panel.add(signOutButton);
-        panel.add(saveButton);
 
         return panel;
 
@@ -103,13 +94,12 @@ public class VisitorLogGUI extends JFrame implements ActionListener {
             handleSignIn();
         } else if (e.getActionCommand().equals("signOut")) {
             handleSignOut();
-        } else if (e.getActionCommand().equals("save")) {
-            handleSave();
         }
     }
 
     // MODIFIES: this
-    // EFFECTS: prompts user for visitor/resident and adds a new entry
+    // EFFECTS: prompts user for visitor/resident and adds a new entry,
+    // saving it to the database
     private void handleSignIn() {
         String visitorName = JOptionPane.showInputDialog(this, "Enter Visitor Name:");
         if (visitorName == null || visitorName.isEmpty()) {
@@ -122,12 +112,18 @@ public class VisitorLogGUI extends JFrame implements ActionListener {
         }
 
         VisitorEntry newEntry = new VisitorEntry(visitorName, residentName, LocalDateTime.now());
+        try {
+            repository.insert(newEntry);
+        } catch (SQLException e) {
+            showDatabaseError(e);
+            return;
+        }
         log.addEntry(newEntry);
         tableModel.refresh();
     }
 
     // MODIFIES: this
-    // EFFECTS: signs out the currently selected visitor
+    // EFFECTS: signs out the currently selected visitor and saves it to the database
     private void handleSignOut() {
         int selectedRow = table.getSelectedRow();
 
@@ -141,7 +137,14 @@ public class VisitorLogGUI extends JFrame implements ActionListener {
         if (!entry.isSignedIn()) {
             JOptionPane.showMessageDialog(this, "This visitor is already signed out.");
         } else {
-            entry.signOut(LocalDateTime.now());
+            LocalDateTime now = LocalDateTime.now();
+            try {
+                repository.signOut(entry.getId(), now);
+            } catch (SQLException e) {
+                showDatabaseError(e);
+                return;
+            }
+            entry.signOut(now);
             tableModel.refresh();
             JOptionPane.showMessageDialog(this, entry.getVisitorName() + " has been signed out.");
         }
@@ -168,47 +171,30 @@ public class VisitorLogGUI extends JFrame implements ActionListener {
         return panel;
     }
 
-    // EFFECTS: displays a load option on startup
-    private void handleLoadOnStart() {
-        int result = JOptionPane.showConfirmDialog(this, "Load previous visitor log?",
-                "Load", JOptionPane.YES_NO_OPTION);
-
-        if (result == JOptionPane.YES_OPTION) {
-            try {
-                log = jsonReader.read();
-                tableModel.setLog(log);
-                JOptionPane.showMessageDialog(this, "Loaded log from " + JSON_STORE);
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(this, "Unable to read from file: " + JSON_STORE);
-            }
-        }
-    }
-
-    // EFFECTS: displays a save option on exit
-    private void handleQuit() {
-        int result = JOptionPane.showConfirmDialog(this, "Save visitor log before quitting?",
-                "Save", JOptionPane.YES_NO_CANCEL_OPTION);
-
-        if (result == JOptionPane.YES_OPTION) {
-            handleSave();
-            printLog();
-            System.exit(0);
-        } else if (result == JOptionPane.NO_OPTION) {
-            printLog();
-            System.exit(0);
-        }
-    }
-
-    // EFFECTS: saves the visitor log to file
-    private void handleSave() {
+    // MODIFIES: this
+    // EFFECTS: opens the database and loads all saved visits into the table;
+    // exits if the database cannot be opened
+    private void loadFromDatabase() {
         try {
-            jsonWriter.open();
-            jsonWriter.write(log);
-            jsonWriter.close();
-            JOptionPane.showMessageDialog(this, "Saved visitor log to " + JSON_STORE);
-        } catch (FileNotFoundException e) {
-            JOptionPane.showMessageDialog(this, "Unable to write to file: " + JSON_STORE);
+            repository = new SqliteVisitorRepository(DB_PATH);
+            log = new VisitorLog(repository.findAll());
+            tableModel.setLog(log);
+        } catch (SQLException e) {
+            showDatabaseError(e);
+            System.exit(1);
         }
+    }
+
+    // EFFECTS: prints the event log and closes the application
+    private void handleQuit() {
+        printLog();
+        System.exit(0);
+    }
+
+    // EFFECTS: shows an error dialog for a database problem
+    private void showDatabaseError(SQLException e) {
+        JOptionPane.showMessageDialog(this, "Database error: " + e.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
     }
 
     // EFFECTS: prints the events in the EventLog to the console

@@ -5,19 +5,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-import persistence.Writable;
-
 // Represents a log of all visitor entries in the care home.
 // Add entries, view all entries, list active visitors,
 // calculate average visit duration, and find the most frequent visitor.
-public class VisitorLog implements Writable {
+public class VisitorLog {
     private List<VisitorEntry> entries;
 
     // EFFECTS: constructs an empty visitor log
     public VisitorLog() {
         entries = new ArrayList<>();
+    }
+
+    // EFFECTS: constructs a visitor log containing the given entries
+    // (used when loading from the database, so no sign-in events are logged)
+    public VisitorLog(List<VisitorEntry> entries) {
+        this.entries = new ArrayList<>(entries);
     }
 
     // MODIFIES: this
@@ -122,20 +124,4 @@ public class VisitorLog implements Writable {
         return entries.size();
     }
 
-    // EFFECTS: returns this VisitorLog as a JSON object
-    @Override
-    public JSONObject toJson() {
-        JSONObject json = new JSONObject();
-        json.put("entries", entriesToJson());
-        return json;
-    }
-
-    // EFFECTS: returns entries in this log as a JSON array
-    private JSONArray entriesToJson() {
-        JSONArray jsonArray = new JSONArray();
-        for (VisitorEntry e : entries) {
-            jsonArray.put(e.toJson());
-        }
-        return jsonArray;
-    }
 }

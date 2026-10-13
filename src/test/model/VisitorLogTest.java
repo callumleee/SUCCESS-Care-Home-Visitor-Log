@@ -108,4 +108,12 @@ public class VisitorLogTest {
     
 
 
+
+    @Test
+    void testConstructorWithEntries() {
+        VisitorLog loaded = new VisitorLog(List.of(entry1, entry2));
+        assertEquals(2, loaded.getTotalEntries());
+        assertEquals(entry1, loaded.getAllEntries().get(0));
+        assertEquals(entry2, loaded.getAllEntries().get(1));
+    }
 }

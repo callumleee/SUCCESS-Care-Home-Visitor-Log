@@ -11,24 +11,24 @@ Many care homes, including the one my grandparents live in, still track visitors
 - Sign visitors in and out
 - See all visitors currently signed in
 - Visit statistics: average visit length, most visited resident, most frequent visitor
-- Save and load the visitor log (JSON)
+- Every sign-in and sign-out is saved automatically to a SQLite database
 - Event log of sign-ins and sign-outs
 - Desktop GUI (Java Swing)
 
 ## Tech stack
-Java 21, Swing, JSON (org.json), JUnit 5
+Java 21, Swing, SQLite (JDBC), JUnit 5
 
 ## Running it
 ```bash
 # Compile
 javac -d out -cp "lib/*" $(find src -name "*.java")
 
-# Run the app
+# Run the app (creates data/visitorlog.db on first run)
 java -cp "out:lib/*" ui.Main
 
 # Run the tests
 java -jar lib/junit-platform-console-standalone-1.10.2.jar execute \
-  --class-path out --class-path lib/json-20250517.jar \
+  --class-path out --class-path lib/sqlite-jdbc-3.53.4.0.jar \
   --select-package model --select-package persistence
 ```
 

@@ -55,4 +55,23 @@ public class VisitorEntryTest {
         assertEquals(0, entry.getDurationMinutes());
     }
 
+
+    @Test
+    void testStoredEntryConstructor() {
+        LocalDateTime timeOut = timeIn.plusMinutes(45);
+        VisitorEntry stored = new VisitorEntry(7, "Joe", "Resident B", timeIn, timeOut);
+        assertEquals(7, stored.getId());
+        assertEquals("Joe", stored.getVisitorName());
+        assertEquals("Resident B", stored.getResidentName());
+        assertEquals(timeOut, stored.getTimeOut());
+        assertFalse(stored.isSignedIn());
+        assertEquals(45, stored.getDurationMinutes());
+    }
+
+    @Test
+    void testSetId() {
+        assertEquals(0, entry.getId());
+        entry.setId(3);
+        assertEquals(3, entry.getId());
+    }
 }
