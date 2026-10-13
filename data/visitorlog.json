@@ -1,0 +1,16 @@
+{
+    "entries": [
+        {
+            "visitorName": "Callum",
+            "residentName": "Resident A",
+            "timeIn": "2025-10-09T22:00:00",
+            "timeOut": "2025-10-09T22:30:00"
+        },
+        {
+            "visitorName": "Visitor1",
+            "residentName": "Resident B",
+            "timeIn": "2025-10-09T22:15:00",
+            "timeOut": null
+        }
+    ]
+}
