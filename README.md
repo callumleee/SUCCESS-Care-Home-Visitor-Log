@@ -16,20 +16,13 @@ Many care homes, including the one my grandparents live in, still track visitors
 - Desktop GUI (Java Swing)
 
 ## Tech stack
-Java 21, Swing, SQLite (JDBC), JUnit 5
+Java 21, Maven, Swing, SQLite (JDBC), JUnit 5
 
 ## Running it
+Requires Java 21 and Maven.
 ```bash
-# Compile
-javac -d out -cp "lib/*" $(find src -name "*.java")
-
-# Run the app (creates data/visitorlog.db on first run)
-java -cp "out:lib/*" ui.Main
-
-# Run the tests
-java -jar lib/junit-platform-console-standalone-1.10.2.jar execute \
-  --class-path out --class-path lib/sqlite-jdbc-3.53.4.0.jar \
-  --select-package model --select-package persistence
+mvn test            # run the tests
+mvn compile exec:java   # run the app (creates data/visitorlog.db on first run)
 ```
 
 ## Roadmap
